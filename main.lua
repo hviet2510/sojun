@@ -1,67 +1,48 @@
 -- main.lua
 
--- Tải Rayfield UI lib
-local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/Rayfield.lua"))()
+local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/BloxFruits-AutoFarm/main/Rayfield.lua"))()
 
--- Load modules từ GitHub
 local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
 local AutoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/autofarm.lua"))()
 
--- Tạo cửa sổ UI
+local mobList = EnemyList.GetEnemyNames()
+local selectedMob = nil
+
+-- Giao diện
 local Window = Rayfield:CreateWindow({
-	Name = "⚔️ Blox Fruits AutoFarm",
-	LoadingTitle = "Đang khởi động...",
+	Name = "Blox Fruits AutoFarm",
+	LoadingTitle = "Khởi chạy...",
 	LoadingSubtitle = "by hviet2510",
-	ConfigurationSaving = {
-		Enabled = false
-	},
+	ConfigurationSaving = { Enabled = false },
 	KeySystem = false
 })
 
--- Tab Farm
 local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
 
--- Lấy danh sách quái
-local mobList = EnemyList.GetEnemyNames()
-local selectedMob = mobList[1]
-
--- Set mặc định ban đầu
-AutoFarm.SetTarget(selectedMob)
-
--- Dropdown chọn mob thủ công
-local MobDropdown = FarmTab:CreateDropdown({
-	Name = "🎯 Chọn Quái (Thủ Công)",
+FarmTab:CreateDropdown({
+	Name = "Chọn Mob Thủ Công",
 	Options = mobList,
-	CurrentOption = selectedMob,
+	CurrentOption = mobList[1],
 	Callback = function(option)
 		selectedMob = option
-		AutoFarm.SetManualTarget(option)
+		AutoFarm.SetTarget(option)
 	end
 })
 
--- Toggle auto farm
 FarmTab:CreateToggle({
-	Name = "🔁 Bật Auto Farm",
+	Name = "Bật Auto Farm",
 	CurrentValue = false,
 	Callback = function(state)
-		AutoFarm.Toggle(state)
-	end
-})
-
--- Nút làm mới danh sách mob từ enemylist
-FarmTab:CreateButton({
-	Name = "🔄 Làm Mới Danh Sách Quái",
-	Callback = function()
-		local newList = EnemyList.GetEnemyNames()
-		MobDropdown:Refresh(newList, true)
-
-		if table.find(newList, selectedMob) then
-			MobDropdown:Set(selectedMob)
-			AutoFarm.SetManualTarget(selectedMob)
-		else
-			selectedMob = newList[1]
-			MobDropdown:Set(selectedMob)
-			AutoFarm.SetManualTarget(selectedMob)
+		if not selectedMob then
+			local stats = game.Players.LocalPlayer:FindFirstChild("leaderstats")
+			local level = stats and (stats:FindFirstChild("Level") or stats:FindFirstChild("Lv"))
+			if level then
+				local auto = EnemyList.GetByLevel(tonumber(level.Value))
+				if auto then
+					AutoFarm.SetTarget(auto.Name)
+				end
+			end
 		end
+		AutoFarm.Toggle(state)
 	end
 })
