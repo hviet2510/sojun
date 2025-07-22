@@ -1,36 +1,30 @@
 -- main.lua
 
--- Tải thư viện UI Rayfield
+-- Load UI và modules từ raw GitHub
 local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/Rayfield.lua"))()
-
--- Load module từ raw GitHub
-local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
 local AutoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/autofarm.lua"))()
+local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
 
--- Tạo UI chính
+-- Tạo UI window
 local Window = Rayfield:CreateWindow({
 	Name = "Blox Fruits AutoFarm",
 	LoadingTitle = "Đang khởi động...",
 	LoadingSubtitle = "by hviet2510",
-	ConfigurationSaving = {
-		Enabled = false
-	},
+	ConfigurationSaving = { Enabled = false },
 	KeySystem = false
 })
 
--- Tab farm
+-- Tab Auto Farm
 local FarmTab = Window:CreateTab("⚔️ Auto Farm", 4483362458)
 
--- Danh sách quái ban đầu
-local mobList = EnemyList.GetValidTargets()
+-- Lấy danh sách quái từ enemylist.lua
+local mobList = EnemyList.GetEnemyNames()
 local selectedMob = mobList[1] or "Bandit"
-
--- Thiết lập target đầu tiên
 AutoFarm.SetTarget(selectedMob)
 
 -- Dropdown chọn quái
 local MobDropdown = FarmTab:CreateDropdown({
-	Name = "🎯 Chọn Quái (theo Level & đã Spawn)",
+	Name = "🎯 Chọn Quái (theo tên trong enemylist)",
 	Options = mobList,
 	CurrentOption = selectedMob,
 	Callback = function(option)
@@ -39,7 +33,7 @@ local MobDropdown = FarmTab:CreateDropdown({
 	end
 })
 
--- Toggle bật/tắt Auto Farm
+-- Toggle bật auto farm
 FarmTab:CreateToggle({
 	Name = "🔁 Bật Auto Farm",
 	CurrentValue = false,
@@ -48,18 +42,18 @@ FarmTab:CreateToggle({
 	end
 })
 
--- Nút làm mới danh sách
+-- Nút làm mới danh sách quái
 FarmTab:CreateButton({
 	Name = "🔄 Làm Mới Danh Sách Quái",
 	Callback = function()
-		local newList = EnemyList.GetValidTargets()
-		MobDropdown:Refresh(newList, true)
+		mobList = EnemyList.GetEnemyNames()
+		MobDropdown:Refresh(mobList, true)
 
-		if table.find(newList, selectedMob) then
+		if table.find(mobList, selectedMob) then
 			MobDropdown:Set(selectedMob)
 			AutoFarm.SetTarget(selectedMob)
 		else
-			selectedMob = newList[1] or "Bandit"
+			selectedMob = mobList[1]
 			MobDropdown:Set(selectedMob)
 			AutoFarm.SetTarget(selectedMob)
 		end
