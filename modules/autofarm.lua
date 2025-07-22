@@ -7,36 +7,41 @@ local FarmLogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hvi
 
 local AutoFarm = {}
 
-local farming = false
-local manualTarget = nil
-local connection
+local isFarming = false
+local selectedMob = nil
+local connection = nil
 
-function AutoFarm.SetManualTarget(name)
-	manualTarget = name
-end
-
-function AutoFarm.SetTarget(name) -- Alias để tương thích main.lua cũ
-	manualTarget = name
+function AutoFarm.SetTarget(mobName)
+	selectedMob = mobName
 end
 
 function AutoFarm.Toggle(state)
-	farming = state
+	isFarming = state
 
-	if connection then
-		connection:Disconnect()
-		connection = nil
-	end
-
-	if farming then
-		print("[AutoFarm] Đã bật.")
+	if isFarming then
 		connection = RunService.Heartbeat:Connect(function()
-			local targetMob = manualTarget or EnemyList.GetMobByLevel()
-			if targetMob then
-				FarmLogic.FarmEnemy(targetMob)
+			local mobToFarm = selectedMob
+
+			if not mobToFarm then
+				local stats = game.Players.LocalPlayer:FindFirstChild("leaderstats")
+				local level = stats and stats:FindFirstChild("Level") or stats:FindFirstChild("Lv")
+				if level then
+					local auto = EnemyList.GetByLevel(tonumber(level.Value))
+					if auto then
+						mobToFarm = auto.Name
+					end
+				end
+			end
+
+			if mobToFarm then
+				FarmLogic.Farm(mobToFarm)
 			end
 		end)
 	else
-		print("[AutoFarm] Đã tắt.")
+		if connection then
+			connection:Disconnect()
+			connection = nil
+		end
 	end
 end
 
