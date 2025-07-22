@@ -2,49 +2,35 @@
 
 local EnemyList = {}
 
--- Tự động quét danh sách quái trong workspace.Enemies
-function EnemyList.GetEnemyList()
-	local enemiesFolder = workspace:FindFirstChild("Enemies")
-	if not enemiesFolder then return {} end
+EnemyList.List = {
+    { Name = "Bandit", Position = Vector3.new(1060, 17, 1548) },
+    { Name = "Monkey", Position = Vector3.new(-1600, 35, 144) },
+    { Name = "Gorilla", Position = Vector3.new(-1320, 85, -510) },
+    { Name = "Pirate", Position = Vector3.new(-1202, 4, 3892) },
+    { Name = "Brute", Position = Vector3.new(-1140, 15, 4320) },
+    { Name = "Buggy", Position = Vector3.new(-1145, 5, 4395) },
+    { Name = "Desert Bandit", Position = Vector3.new(933, 7, 4480) },
+    { Name = "Desert Officer", Position = Vector3.new(1572, 10, 4371) },
+    { Name = "Snow Bandit", Position = Vector3.new(1426, 106, -1327) },
+    { Name = "Snowman", Position = Vector3.new(1243, 137, -1452) },
+    -- Thêm nhiều quái nữa nếu bạn muốn
+}
 
-	local seen = {}
-	local result = {}
-
-	for _, mob in ipairs(enemiesFolder:GetChildren()) do
-		if mob:IsA("Model") and mob:FindFirstChild("HumanoidRootPart") and mob:FindFirstChild("Humanoid") then
-			local mobName = mob.Name:match("^(.-)%s?%[") or mob.Name
-			if not seen[mobName] then
-				table.insert(result, {
-					Name = mobName,
-					Position = mob.HumanoidRootPart.Position
-				})
-				seen[mobName] = true
-			end
-		end
-	end
-
-	return result
-end
-
--- Trả danh sách tên quái cho UI dropdown
 function EnemyList.GetEnemyNames()
-	local list = EnemyList.GetEnemyList()
-	local names = {}
-	for _, enemy in ipairs(list) do
-		table.insert(names, enemy.Name)
-	end
-	return names
+    local names = {}
+    for _, enemy in ipairs(EnemyList.List) do
+        table.insert(names, enemy.Name)
+    end
+    return names
 end
 
--- Lấy vị trí quái theo tên
-function EnemyList.GetPositionByName(name)
-	local list = EnemyList.GetEnemyList()
-	for _, enemy in ipairs(list) do
-		if enemy.Name:lower() == name:lower() then
-			return enemy.Position
-		end
-	end
-	return nil
+function EnemyList.GetEnemyDataByName(name)
+    for _, enemy in ipairs(EnemyList.List) do
+        if enemy.Name == name then
+            return enemy
+        end
+    end
+    return nil
 end
 
 return EnemyList
