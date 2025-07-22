@@ -1,15 +1,15 @@
 -- main.lua
 
--- Tải Rayfield UI từ GitHub
+-- Tải thư viện UI Rayfield
 local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/Rayfield.lua"))()
 
--- Load các module qua raw URL
-local AutoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/autofarm.lua"))()
+-- Load module từ raw GitHub
 local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
+local AutoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/autofarm.lua"))()
 
--- Tạo cửa sổ giao diện
+-- Tạo UI chính
 local Window = Rayfield:CreateWindow({
-	Name = "Sojun | Blox Fruits AutoFarm",
+	Name = "Blox Fruits AutoFarm",
 	LoadingTitle = "Đang khởi động...",
 	LoadingSubtitle = "by hviet2510",
 	ConfigurationSaving = {
@@ -18,20 +18,20 @@ local Window = Rayfield:CreateWindow({
 	KeySystem = false
 })
 
--- Tab chính
+-- Tab farm
 local FarmTab = Window:CreateTab("⚔️ Auto Farm", 4483362458)
 
--- Lấy danh sách quái hiện tại từ workspace
-local enemyNames = EnemyList.GetEnemyNames()
-local selectedMob = enemyNames[1] or "Bandit"
+-- Danh sách quái ban đầu
+local mobList = EnemyList.GetValidTargets()
+local selectedMob = mobList[1] or "Bandit"
 
--- Cài target ban đầu
+-- Thiết lập target đầu tiên
 AutoFarm.SetTarget(selectedMob)
 
 -- Dropdown chọn quái
 local MobDropdown = FarmTab:CreateDropdown({
-	Name = "🎯 Chọn Quái",
-	Options = enemyNames,
+	Name = "🎯 Chọn Quái (theo Level & đã Spawn)",
+	Options = mobList,
 	CurrentOption = selectedMob,
 	Callback = function(option)
 		selectedMob = option
@@ -39,7 +39,7 @@ local MobDropdown = FarmTab:CreateDropdown({
 	end
 })
 
--- Toggle bật/tắt farm
+-- Toggle bật/tắt Auto Farm
 FarmTab:CreateToggle({
 	Name = "🔁 Bật Auto Farm",
 	CurrentValue = false,
@@ -48,20 +48,18 @@ FarmTab:CreateToggle({
 	end
 })
 
--- Nút làm mới danh sách quái từ workspace
+-- Nút làm mới danh sách
 FarmTab:CreateButton({
 	Name = "🔄 Làm Mới Danh Sách Quái",
 	Callback = function()
-		local newList = EnemyList.GetEnemyNames()
+		local newList = EnemyList.GetValidTargets()
 		MobDropdown:Refresh(newList, true)
 
-		-- Nếu quái đã chọn vẫn còn
 		if table.find(newList, selectedMob) then
 			MobDropdown:Set(selectedMob)
 			AutoFarm.SetTarget(selectedMob)
 		else
-			-- Nếu quái cũ không còn -> chọn quái mới đầu danh sách
-			selectedMob = newList[1]
+			selectedMob = newList[1] or "Bandit"
 			MobDropdown:Set(selectedMob)
 			AutoFarm.SetTarget(selectedMob)
 		end
