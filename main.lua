@@ -1,6 +1,6 @@
 -- main.lua
 
-local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/BloxFruits-AutoFarm/main/Rayfield.lua"))()
+local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/Rayfield.lua"))()
 
 local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
 local AutoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/autofarm.lua"))()
