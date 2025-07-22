@@ -1,41 +1,35 @@
--- autofarm.lua (dùng loadstring)
-
 local RunService = game:GetService("RunService")
 
--- Load modules bằng raw URL
 local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
 local FarmLogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/farmlogic.lua"))()
 
 local AutoFarm = {}
 
-local isFarming = false
-local currentTarget = nil
-local connection = nil
+local selectedTarget = nil
+local farming = false
+local heartbeatConn = nil
 
--- Toggle Auto Farm
+function AutoFarm.SetTarget(name)
+	selectedTarget = name
+end
+
 function AutoFarm.Toggle(state)
-	isFarming = state
+	farming = state
 
-	if isFarming then
-		print("[AutoFarm] ✅ Bật AutoFarm")
-		connection = RunService.Heartbeat:Connect(function()
-			if currentTarget then
-				FarmLogic.FarmEnemy(currentTarget)
+	if farming then
+		print("[AutoFarm] Bắt đầu farm:", selectedTarget)
+		heartbeatConn = RunService.Heartbeat:Connect(function()
+			if selectedTarget then
+				FarmLogic.FarmEnemy(selectedTarget)
 			end
 		end)
 	else
-		print("[AutoFarm] ❌ Tắt AutoFarm")
-		if connection then
-			connection:Disconnect()
-			connection = nil
+		print("[AutoFarm] Dừng farm.")
+		if heartbeatConn then
+			heartbeatConn:Disconnect()
+			heartbeatConn = nil
 		end
 	end
-end
-
--- Đặt tên quái để farm
-function AutoFarm.SetTarget(name)
-	currentTarget = name
-	print("[AutoFarm] 🎯 Target:", currentTarget)
 end
 
 return AutoFarm
