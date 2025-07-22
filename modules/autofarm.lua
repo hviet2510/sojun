@@ -1,29 +1,34 @@
 -- modules/autofarm.lua
 
 local RunService = game:GetService("RunService")
-
-local EnemyList = require(script.Parent.enemylist)
-local FarmLogic = require(script.Parent.farmlogic)
+local FarmLogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/farmlogic.lua"))()
 
 local AutoFarm = {}
 
-local farming = false
-local heartbeatConn = nil
+local isFarming = false
+local targetMob = nil
+local conn = nil
+
+function AutoFarm.SetTarget(name)
+	targetMob = name
+end
 
 function AutoFarm.Toggle(state)
-	farming = state
+	isFarming = state
 
-	if farming then
-		print("[AutoFarm] Bật auto farm.")
-		heartbeatConn = RunService.Heartbeat:Connect(function()
-			local target = EnemyList.GetCurrentTarget()
-			FarmLogic.Farm(target)
+	if isFarming then
+		print("[AutoFarm] Bắt đầu farm:", targetMob)
+
+		conn = RunService.Heartbeat:Connect(function()
+			if targetMob then
+				FarmLogic.FarmEnemy(targetMob)
+			end
 		end)
 	else
-		print("[AutoFarm] Tắt auto farm.")
-		if heartbeatConn then
-			heartbeatConn:Disconnect()
-			heartbeatConn = nil
+		print("[AutoFarm] Dừng farm.")
+		if conn then
+			conn:Disconnect()
+			conn = nil
 		end
 	end
 end
