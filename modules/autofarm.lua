@@ -2,33 +2,41 @@
 
 local RunService = game:GetService("RunService")
 
-local FarmLogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/farmlogic.lua"))()
 local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
+local FarmLogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/farmlogic.lua"))()
 
 local AutoFarm = {}
 
-local targetMobName = "Bandit"
 local farming = false
-local conn = nil
+local manualTarget = nil
+local connection
 
-function AutoFarm.SetTarget(name)
-	targetMobName = name
+function AutoFarm.SetManualTarget(name)
+	manualTarget = name
+end
+
+function AutoFarm.SetTarget(name) -- Alias để tương thích main.lua cũ
+	manualTarget = name
 end
 
 function AutoFarm.Toggle(state)
 	farming = state
 
+	if connection then
+		connection:Disconnect()
+		connection = nil
+	end
+
 	if farming then
-		conn = RunService.Heartbeat:Connect(function()
-			if targetMobName then
-				FarmLogic.FarmEnemy(targetMobName)
+		print("[AutoFarm] Đã bật.")
+		connection = RunService.Heartbeat:Connect(function()
+			local targetMob = manualTarget or EnemyList.GetMobByLevel()
+			if targetMob then
+				FarmLogic.FarmEnemy(targetMob)
 			end
 		end)
 	else
-		if conn then
-			conn:Disconnect()
-			conn = nil
-		end
+		print("[AutoFarm] Đã tắt.")
 	end
 end
 
