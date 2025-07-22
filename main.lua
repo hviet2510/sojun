@@ -2,7 +2,7 @@
 -- main.lua
 
 -- Tải thư viện Rayfield UI
-local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/BloxFruits-AutoFarm/main/Rayfield.lua"))()
+local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/Rayfield.lua"))()
 
 -- Load các modules từ repo
 local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
