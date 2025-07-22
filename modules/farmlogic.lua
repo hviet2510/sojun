@@ -6,22 +6,27 @@ local LocalPlayer = Players.LocalPlayer
 
 local FarmLogic = {}
 
--- Tween đến mob
-local function TweenTo(pos)
+-- Tween mượt đến mob (an toàn)
+local function TweenToPosition(position)
 	local char = LocalPlayer.Character
-	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+	if not char then return end
 
-	local hrp = char.HumanoidRootPart
-	local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Linear)
-	local goal = { CFrame = CFrame.new(pos + Vector3.new(0, 5, 0)) }
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
 
-	local tween = TweenService:Create(hrp, tweenInfo, goal)
+	local goalCFrame = CFrame.new(position + Vector3.new(0, 5, 0))
+	local tweenInfo = TweenInfo.new((hrp.Position - position).Magnitude / 100, Enum.EasingStyle.Linear)
+
+	local tween = TweenService:Create(hrp, tweenInfo, { CFrame = goalCFrame })
 	tween:Play()
-	tween.Completed:Wait()
+
+	local success, err = pcall(function()
+		tween.Completed:Wait()
+	end)
 end
 
--- Tìm mob
-local function FindMob(name)
+-- Tìm quái theo tên
+local function FindTargetMob(name)
 	local enemies = workspace:FindFirstChild("Enemies")
 	if not enemies then return nil end
 
@@ -33,19 +38,33 @@ local function FindMob(name)
 			end
 		end
 	end
+
+	return nil
 end
 
-function FarmLogic.FarmEnemy(name)
-	local mob = FindMob(name)
-	if not mob then return end
+-- Gọi farm
+function FarmLogic.FarmEnemy(mobName)
+	if typeof(mobName) ~= "string" then
+		warn("[FarmLogic] Tên mob không hợp lệ:", typeof(mobName))
+		return
+	end
+
+	local mob = FindTargetMob(mobName)
+	if not mob then
+		warn("[FarmLogic] Không tìm thấy mob:", mobName)
+		return
+	end
 
 	local char = LocalPlayer.Character
 	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
 
 	local tool = char:FindFirstChildOfClass("Tool")
-	if not tool then return end
+	if not tool then
+		warn("[FarmLogic] Không có vũ khí để đánh.")
+		return
+	end
 
-	TweenTo(mob.HumanoidRootPart.Position)
+	TweenToPosition(mob.HumanoidRootPart.Position)
 
 	if (char.HumanoidRootPart.Position - mob.HumanoidRootPart.Position).Magnitude <= 50 then
 		tool:Activate()
