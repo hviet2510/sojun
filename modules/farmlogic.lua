@@ -1,42 +1,41 @@
--- modules/farmlogic.lua
+-- farmlogic.lua
+-- Xử lý logic chọn quái tự động hoặc thủ công dựa vào cấp độ
 
-local TweenService = game:GetService("TweenService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/enemylist.lua"))()
 
-local FarmLogic = {}
+local selectedMob = nil
+local autoMob = true
 
-function FarmLogic.Farm(mobName)
-	local enemies = workspace:FindFirstChild("Enemies")
-	if not enemies then return end
+-- Hàm chọn quái theo level
+local function GetTargetMob(currentLevel)
+    if not autoMob and selectedMob and EnemyList[selectedMob] then
+        return selectedMob, EnemyList[selectedMob]
+    end
 
-	local targetMob = nil
-	for _, mob in ipairs(enemies:GetChildren()) do
-		if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob:FindFirstChild("HumanoidRootPart") then
-			local name = mob.Name:match("^(.-)%s?%[") or mob.Name
-			if name:lower() == mobName:lower() and mob.Humanoid.Health > 0 then
-				targetMob = mob
-				break
-			end
-		end
-	end
+    for name, data in pairs(EnemyList) do
+        if currentLevel >= data.Level then
+            selectedMob = name
+        end
+    end
 
-	if not targetMob then return end
-
-	local char = LocalPlayer.Character
-	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-	local tool = char:FindFirstChildOfClass("Tool")
-	if not tool then return end
-
-	local tween = TweenService:Create(char.HumanoidRootPart, TweenInfo.new(1, Enum.EasingStyle.Linear), {
-		CFrame = targetMob.HumanoidRootPart.CFrame + Vector3.new(0, 5, 0)
-	})
-	tween:Play()
-	tween.Completed:Wait()
-
-	if (char.HumanoidRootPart.Position - targetMob.HumanoidRootPart.Position).Magnitude <= 50 then
-		tool:Activate()
-	end
+    return selectedMob, EnemyList[selectedMob]
 end
 
-return FarmLogic
+-- Hàm đặt quái thủ công
+local function SetManualMob(mobName)
+    if EnemyList[mobName] then
+        selectedMob = mobName
+        autoMob = false
+    end
+end
+
+-- Hàm bật/tắt chế độ tự động chọn quái
+local function EnableAutoMob(state)
+    autoMob = state
+end
+
+return {
+    GetTargetMob = GetTargetMob,
+    SetManualMob = SetManualMob,
+    EnableAutoMob = EnableAutoMob
+}
