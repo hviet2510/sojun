@@ -1,84 +1,132 @@
--- main.lua
+-- // 🌟 Rayfield UI
+loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/Rayfield.lua"))()
 
--- Load Rayfield UI từ repo của bạn
-local success, Rayfield = pcall(function()
-	return loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/Rayfield.lua"))()
-end)
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
-if not success then
-	warn("Không thể tải Rayfield UI từ repo của bạn")
-	return
-end
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local RootPart = Character:WaitForChild("HumanoidRootPart")
 
--- Load các module từ thư mục modules/
-local enemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
-local farmLogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/farmlogic.lua"))()
-local autoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/autofarm.lua"))()
+local isFarming = false
 
--- Tạo cửa sổ UI
-local Window = Rayfield:CreateWindow({
-	Name = "Sojun Hub - Blox Fruits",
-	LoadingTitle = "Sojun Hub",
-	LoadingSubtitle = "by hviet2510",
-	ConfigurationSaving = {
-		Enabled = true,
-		FolderName = "SojunHub",
-		FileName = "SojunConfig"
-	},
-	Discord = {
-		Enabled = false
-	},
-	KeySystem = false
-})
+-- ✅ Bảng định nghĩa level yêu cầu của từng quái Sea 1
+local mobLevelRanges = {
+	["Bandit"] = {min = 0, max = 10},
+	["Monkey"] = {min = 10, max = 15},
+	["Gorilla"] = {min = 15, max = 20},
+	["Brute"] = {min = 20, max = 30},
+	["Pirate"] = {min = 30, max = 40},
+	["Captain"] = {min = 40, max = 55},
+	["Clown Pirate"] = {min = 55, max = 70},
+	["Swordman Pirate"] = {min = 70, max = 90},
+}
 
--- Tab chính
-local MainTab = Window:CreateTab("Auto Farm", 4483362458)
-
--- Toggle Auto Farm
-MainTab:CreateToggle({
-	Name = "Auto Farm",
-	CurrentValue = false,
-	Callback = function(state)
-		if state then
-			autoFarm.StartFarm(enemyList, farmLogic)
-		else
-			autoFarm.StopFarm()
+-- 🔍 Lấy tên mob phù hợp với level hiện tại
+local function GetTargetMobName(playerLevel)
+	for mobName, range in pairs(mobLevelRanges) do
+		if playerLevel >= range.min and playerLevel <= range.max then
+			return mobName
 		end
 	end
-})
-
--- Dropdown chọn mob thủ công
-local options = {}
-for name, data in pairs(enemyList) do
-	table.insert(options, data.DisplayName)
+	return nil
 end
 
-MainTab:CreateDropdown({
-	Name = "Chọn Mob thủ công",
-	Options = options,
-	CurrentOption = {},
-	Callback = function(option)
-		for name, data in pairs(enemyList) do
-			if data.DisplayName == option then
-				farmLogic.SetManualMob(name, enemyList)
-				break
+-- ✅ Lấy mob gần nhất đúng tên
+local function GetClosestMob(targetMobName)
+	local closestMob = nil
+	local shortestDistance = math.huge
+
+	for _, mob in pairs(workspace.Enemies:GetChildren()) do
+		local humanoid = mob:FindFirstChild("Humanoid")
+		local hrp = mob:FindFirstChild("HumanoidRootPart")
+
+		if humanoid and humanoid.Health > 0 and hrp and mob.Name == targetMobName then
+			local distance = (hrp.Position - RootPart.Position).Magnitude
+			if distance < shortestDistance then
+				shortestDistance = distance
+				closestMob = mob
 			end
 		end
 	end
+
+	return closestMob
+end
+
+-- ✅ Di chuyển đến vị trí
+local function TweenToPosition(pos)
+	local distance = (RootPart.Position - pos).Magnitude
+	local tweenInfo = TweenInfo.new(distance / 250, Enum.EasingStyle.Linear)
+	local tween = TweenService:Create(RootPart, tweenInfo, { CFrame = CFrame.new(pos) })
+	tween:Play()
+	tween.Completed:Wait()
+end
+
+-- ✅ Tự động trang bị vũ khí và đánh
+local function AttackMob()
+	pcall(function()
+		for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+			if tool:IsA("Tool") then
+				tool.Parent = Character
+			end
+		end
+		Character:FindFirstChildOfClass("Humanoid"):ChangeState(3)
+	end)
+end
+
+-- ✅ Auto Farm Loop
+local function StartAutoFarm()
+	isFarming = true
+	task.spawn(function()
+		while isFarming do
+			local level = LocalPlayer.Data.Level.Value
+			local targetMobName = GetTargetMobName(level)
+			if not targetMobName then
+				warn("❌ Không tìm thấy mob phù hợp với level " .. tostring(level))
+				wait(1)
+				continue
+			end
+
+			local mob = GetClosestMob(targetMobName)
+
+			if mob and mob:FindFirstChild("HumanoidRootPart") then
+				local mobPos = mob.HumanoidRootPart.Position + Vector3.new(0, 10, 0)
+				TweenToPosition(mobPos)
+				wait(0.2)
+				AttackMob()
+			end
+
+			wait(0.25)
+		end
+	end)
+end
+
+local function StopAutoFarm()
+	isFarming = false
+end
+
+-- // 🔘 Rayfield UI Setup
+local Window = Rayfield:CreateWindow({
+	Name = "Noda Hub | Blox Fruits",
+	LoadingTitle = "Noda UI Loading",
+	LoadingSubtitle = "by hviet2510",
+	ConfigurationSaving = {
+		Enabled = false
+	},
+	KeySystem = false,
 })
 
--- Toggle Auto chọn mob theo level
+local MainTab = Window:CreateTab("🏴‍☠️ Auto Farm", 4483362458)
+
 MainTab:CreateToggle({
-	Name = "Auto chọn Mob theo level",
-	CurrentValue = true,
-	Callback = function(value)
-		farmLogic.EnableAutoMob(value)
-	end
-})
-
--- Thông báo UI đã mở thành công
-Rayfield:Notify({
-	Title = "Sojun Hub",
-	Content = "UI đã mở thành công!",
-	Duration = 4
+	Name = "Tự động farm quái (Sea 1)",
+	CurrentValue = false,
+	Callback = function(Value)
+		if Value then
+			StartAutoFarm()
+		else
+			StopAutoFarm()
+		end
+	end,
 })
