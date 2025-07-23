@@ -1,41 +1,64 @@
 -- farmlogic.lua
--- Xử lý logic chọn quái tự động hoặc thủ công dựa vào cấp độ
+-- Load dữ liệu enemylist từ link ngoài (không dùng require)
 
-local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/enemylist.lua"))()
+local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/Noda/main/modules/enemylist.lua"))()
 
 local selectedMob = nil
 local autoMob = true
 
--- Hàm chọn quái theo level
+-- Tự động chọn mob theo level
 local function GetTargetMob(currentLevel)
     if not autoMob and selectedMob and EnemyList[selectedMob] then
         return selectedMob, EnemyList[selectedMob]
     end
 
-    for name, data in pairs(EnemyList) do
-        if currentLevel >= data.Level then
-            selectedMob = name
+    local bestMob = nil
+    local bestLevel = 0
+
+    for mobName, mobData in pairs(EnemyList) do
+        if currentLevel >= mobData.Level and mobData.Level >= bestLevel then
+            bestMob = mobName
+            bestLevel = mobData.Level
         end
     end
 
-    return selectedMob, EnemyList[selectedMob]
+    if bestMob then
+        selectedMob = bestMob
+        return selectedMob, EnemyList[selectedMob]
+    end
+
+    return nil, nil
 end
 
--- Hàm đặt quái thủ công
+-- Đặt mob thủ công
 local function SetManualMob(mobName)
     if EnemyList[mobName] then
         selectedMob = mobName
         autoMob = false
+        return true
     end
+    return false
 end
 
--- Hàm bật/tắt chế độ tự động chọn quái
+-- Bật/tắt auto chọn mob
 local function EnableAutoMob(state)
     autoMob = state
+end
+
+-- Trả danh sách mob phù hợp theo level
+local function GetFarmableMobs(currentLevel)
+    local result = {}
+    for name, data in pairs(EnemyList) do
+        if currentLevel >= data.Level then
+            table.insert(result, name)
+        end
+    end
+    return result
 end
 
 return {
     GetTargetMob = GetTargetMob,
     SetManualMob = SetManualMob,
-    EnableAutoMob = EnableAutoMob
+    EnableAutoMob = EnableAutoMob,
+    GetFarmableMobs = GetFarmableMobs
 }
