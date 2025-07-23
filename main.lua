@@ -1,28 +1,45 @@
 -- main.lua
--- Giao diện và tích hợp tất cả modules
+-- Tải UI và modules auto farm
 
-local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source.lua"))()
+local success, Rayfield = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/shlexware/Rayfield/main/source.lua"))()
+end)
 
+if not success then
+    warn("Không thể tải Rayfield UI")
+    return
+end
+
+-- Load các module
 local enemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/enemylist.lua"))()
 local farmLogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/farmlogic.lua"))()
 local autoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/autofarm.lua"))()
 
+-- Tạo UI Window
 local Window = Rayfield:CreateWindow({
     Name = "Sojun Hub - Blox Fruits",
     LoadingTitle = "Sojun Hub",
+    LoadingSubtitle = "by hviet2510",
     ConfigurationSaving = {
         Enabled = true,
-        FolderName = "SojunHub"
-    }
+        FolderName = "SojunHub",
+        FileName = "SojunConfig"
+    },
+    Discord = {
+        Enabled = false
+    },
+    KeySystem = false
 })
 
+-- Tab Auto Farm
 local MainTab = Window:CreateTab("Auto Farm", 4483362458)
 
+-- Toggle Auto Farm
 MainTab:CreateToggle({
     Name = "Auto Farm",
     CurrentValue = false,
-    Callback = function(value)
-        if value then
+    Callback = function(state)
+        if state then
             autoFarm.StartFarm(enemyList, farmLogic)
         else
             autoFarm.StopFarm()
@@ -30,14 +47,15 @@ MainTab:CreateToggle({
     end
 })
 
-local mobOptions = {}
+-- Dropdown chọn mob thủ công
+local options = {}
 for name, data in pairs(enemyList) do
-    table.insert(mobOptions, data.DisplayName)
+    table.insert(options, data.DisplayName)
 end
 
 MainTab:CreateDropdown({
     Name = "Chọn Mob thủ công",
-    Options = mobOptions,
+    Options = options,
     CurrentOption = {},
     Callback = function(option)
         for name, data in pairs(enemyList) do
@@ -49,6 +67,7 @@ MainTab:CreateDropdown({
     end
 })
 
+-- Toggle auto chọn mob theo level
 MainTab:CreateToggle({
     Name = "Auto chọn Mob theo level",
     CurrentValue = true,
