@@ -11,9 +11,9 @@ if not success then
 end
 
 -- Load các module
-local enemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/enemylist.lua"))()
-local farmLogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/farmlogic.lua"))()
-local autoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/autofarm.lua"))()
+local enemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
+local farmLogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/farmlogic.lua"))()
+local autoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/autofarm.lua"))()
 
 -- Tạo UI Window
 local Window = Rayfield:CreateWindow({
