@@ -1,68 +1,67 @@
 -- main.lua
--- Khởi chạy giao diện và auto farm
 
--- Load UI lib Rayfield
-local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/Rayfield.lua"))()
+-- Load UI lib
+local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/Noda/main/Rayfield.lua"))()
 
--- Load các module
-local farmlogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/farmlogic.lua"))()
-local autofarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/autofarm.lua"))
+-- Load modules
+local AutoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/Noda/main/modules/autofarm.lua"))()
+local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/Noda/main/modules/enemylist.lua"))()
 
--- Khởi tạo cửa sổ UI
+-- Tạo UI chính
 local Window = Rayfield:CreateWindow({
     Name = "Noda Hub | Blox Fruits",
-    LoadingTitle = "Noda Hub Loading...",
+    LoadingTitle = "Noda Hub",
     LoadingSubtitle = "by hviet2510",
     ConfigurationSaving = {
         Enabled = true,
         FolderName = "NodaHub",
-        FileName = "config"
+        FileName = "NodaConfig"
     },
     Discord = {
-        Enabled = false
+        Enabled = false,
     },
     KeySystem = false
 })
 
--- Tạo tab chính
-local MainTab = Window:CreateTab("Auto Farm", 4483362458)
+-- Tab Auto Farm
+local FarmTab = Window:CreateTab("Auto Farm", 4483362458)
 
--- Toggle Auto Farm
-local AutoFarmEnabled = false
-
-MainTab:CreateToggle({
+-- Toggle chính bật/tắt Auto Farm
+FarmTab:CreateToggle({
     Name = "Auto Farm Level",
     CurrentValue = false,
     Flag = "AutoFarmToggle",
     Callback = function(Value)
-        AutoFarmEnabled = Value
-        if AutoFarmEnabled then
-            -- Chạy autofarm nếu bật toggle
-            task.spawn(function()
-                autofarm()
-            end)
-        end
-    end
+        AutoFarm.Toggle(Value)
+    end,
 })
 
--- Dropdown chọn quái thủ công
-MainTab:CreateDropdown({
-    Name = "Chọn Quái Thủ Công",
-    Options = {"Bandit", "Monkey", "Gorilla"},
-    CurrentOption = nil,
-    Flag = "ManualMob",
-    Callback = function(mobName)
-        farmlogic.SetManualMob(mobName)
-        farmlogic.EnableAutoMob(false)
-    end
-})
-
--- Toggle bật lại chế độ tự động chọn quái theo level
-MainTab:CreateToggle({
-    Name = "Tự Động Chọn Quái Theo Level",
+-- Toggle tự động chọn quái theo level
+FarmTab:CreateToggle({
+    Name = "Auto chọn Mob theo Level",
     CurrentValue = true,
-    Flag = "AutoMobSelect",
-    Callback = function(value)
-        farmlogic.EnableAutoMob(value)
-    end
+    Flag = "AutoSelectMobToggle",
+    Callback = function(Value)
+        AutoFarm.SetAutoMob(Value)
+    end,
 })
+
+-- Dropdown chọn quái thủ công từ enemylist
+FarmTab:CreateDropdown({
+    Name = "Chọn Mob thủ công",
+    Options = (function()
+        local mobs = {}
+        for mobName, _ in pairs(EnemyList) do
+            table.insert(mobs, mobName)
+        end
+        table.sort(mobs)
+        return mobs
+    end)(),
+    CurrentOption = nil,
+    Flag = "ManualMobSelect",
+    Callback = function(option)
+        AutoFarm.SetManualMob(option)
+    end,
+})
+
+Rayfield:LoadConfiguration()
