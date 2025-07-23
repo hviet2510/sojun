@@ -1,7 +1,7 @@
 -- farmlogic.lua
 -- Load dữ liệu enemylist từ link ngoài (không dùng require)
 
-local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/Noda/main/modules/enemylist.lua"))()
+local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
 
 local selectedMob = nil
 local autoMob = true
