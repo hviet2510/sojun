@@ -1,21 +1,21 @@
 -- main.lua
 
 -- Load UI lib
-local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/Noda/main/Rayfield.lua"))()
+local Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/Rayfield.lua"))()
 
 -- Load modules
-local AutoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/Noda/main/modules/autofarm.lua"))()
-local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/Noda/main/modules/enemylist.lua"))()
+local AutoFarm = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/autofarm.lua"))()
+local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/enemylist.lua"))()
 
 -- Tạo UI chính
 local Window = Rayfield:CreateWindow({
-    Name = "Noda Hub | Blox Fruits",
-    LoadingTitle = "Noda Hub",
+    Name = "sojun Hub | Blox Fruits",
+    LoadingTitle = "sojun Hub",
     LoadingSubtitle = "by hviet2510",
     ConfigurationSaving = {
         Enabled = true,
-        FolderName = "NodaHub",
-        FileName = "NodaConfig"
+        FolderName = "sojunHub",
+        FileName = "sojunConfig"
     },
     Discord = {
         Enabled = false,
