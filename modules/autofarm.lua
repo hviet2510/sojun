@@ -1,54 +1,108 @@
--- autofarm.lua
--- Tự động farm quái và nhận nhiệm vụ
-
+local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local RootPart = Character:WaitForChild("HumanoidRootPart")
 
 local isFarming = false
 
-local function MoveTo(position)
-    local char = game.Players.LocalPlayer.Character
-    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+-- ✅ Bảng định nghĩa level yêu cầu của từng quái Sea 1
+local mobLevelRanges = {
+	["Bandit"] = {min = 0, max = 10},
+	["Monkey"] = {min = 10, max = 15},
+	["Gorilla"] = {min = 15, max = 20},
+	["Brute"] = {min = 20, max = 30},
+	["Pirate"] = {min = 30, max = 40},
+	["Captain"] = {min = 40, max = 55},
+	["Clown Pirate"] = {min = 55, max = 70},
+	["Swordman Pirate"] = {min = 70, max = 90},
+	-- Thêm tiếp nếu muốn
+}
 
-    local tween = TweenService:Create(char.HumanoidRootPart, TweenInfo.new(1), {CFrame = CFrame.new(position)})
-    tween:Play()
-    tween.Completed:Wait()
+-- 🔍 Lấy tên mob phù hợp với level hiện tại
+local function GetTargetMobName(playerLevel)
+	for mobName, range in pairs(mobLevelRanges) do
+		if playerLevel >= range.min and playerLevel <= range.max then
+			return mobName
+		end
+	end
+	return nil
 end
 
-local function StartFarm(enemyList, farmLogic)
-    isFarming = true
+-- ✅ Lấy mob gần nhất đúng tên
+local function GetClosestMob(targetMobName)
+	local closestMob = nil
+	local shortestDistance = math.huge
 
-    while isFarming do
-        local level = game.Players.LocalPlayer.Data.Level.Value
-        local mobName, mobData = farmLogic.GetTargetMob(level, enemyList)
-        if not mobData then break end
+	for _, mob in pairs(workspace.Enemies:GetChildren()) do
+		local humanoid = mob:FindFirstChild("Humanoid")
+		local hrp = mob:FindFirstChild("HumanoidRootPart")
 
-        -- Lấy quest
-        local npc = workspace:FindFirstChild(mobData.QuestNPC)
-        if npc then MoveTo(mobData.QuestPos) end
+		if humanoid and humanoid.Health > 0 and hrp and mob.Name == targetMobName then
+			local distance = (hrp.Position - RootPart.Position).Magnitude
+			if distance < shortestDistance then
+				shortestDistance = distance
+				closestMob = mob
+			end
+		end
+	end
 
-        -- Tấn công quái
-        local foundMob = nil
-        for _, mob in pairs(workspace.Enemies:GetChildren()) do
-            if mob.Name == mobData.MobName and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
-                foundMob = mob
-                break
-            end
-        end
-
-        if foundMob then
-            MoveTo(foundMob.HumanoidRootPart.Position + Vector3.new(0,5,0))
-            -- Attack logic ở đây nếu có vũ khí v.v.
-        end
-
-        task.wait(1)
-    end
+	return closestMob
 end
 
-local function StopFarm()
-    isFarming = false
+local function TweenToPosition(pos)
+	local distance = (RootPart.Position - pos).Magnitude
+	local tweenInfo = TweenInfo.new(distance / 250, Enum.EasingStyle.Linear)
+	local tween = TweenService:Create(RootPart, tweenInfo, { CFrame = CFrame.new(pos) })
+	tween:Play()
+	tween.Completed:Wait()
+end
+
+local function AttackMob()
+	pcall(function()
+		for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
+			if tool:IsA("Tool") then
+				tool.Parent = Character
+			end
+		end
+		Character:FindFirstChildOfClass("Humanoid"):ChangeState(3)
+	end)
+end
+
+local function StartAutoFarm()
+	isFarming = true
+
+	task.spawn(function()
+		while isFarming do
+			local level = LocalPlayer.Data.Level.Value
+			local targetMobName = GetTargetMobName(level)
+			if not targetMobName then
+				warn("❌ Không tìm thấy mob phù hợp với level " .. tostring(level))
+				wait(1)
+				continue
+			end
+
+			local mob = GetClosestMob(targetMobName)
+
+			if mob and mob:FindFirstChild("HumanoidRootPart") then
+				local mobPos = mob.HumanoidRootPart.Position + Vector3.new(0, 10, 0)
+				TweenToPosition(mobPos)
+				wait(0.2)
+				AttackMob()
+			end
+
+			wait(0.25)
+		end
+	end)
+end
+
+local function StopAutoFarm()
+	isFarming = false
 end
 
 return {
-    StartFarm = StartFarm,
-    StopFarm = StopFarm
+	StartAutoFarm = StartAutoFarm,
+	StopAutoFarm = StopAutoFarm,
 }
