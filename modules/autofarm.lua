@@ -1,46 +1,98 @@
 -- autofarm.lua
--- Hệ thống auto farm tự động tìm và đánh quái gần nhất theo cấp độ
 
-local player = game.Players.LocalPlayer
-local char = player.Character or player.CharacterAdded:Wait()
-local hrp = char:WaitForChild("HumanoidRootPart")
-local rs = game:GetService("RunService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
-local farmlogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/farmlogic.lua"))()
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
 
--- Hàm lấy cấp độ hiện tại
-local function GetLevel()
-    return player:FindFirstChild("Data") and player.Data.Level.Value or 0
-end
+-- Load modules
+local EnemyList = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/Noda/main/modules/enemylist.lua"))()
+local FarmLogic = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/Noda/main/modules/farmlogic.lua"))()
 
--- Hàm dịch chuyển đến vị trí
-local function TeleportTo(pos)
-    if typeof(pos) == "Vector3" then
-        hrp.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
+-- Cấu hình
+local Farming = false
+local Distance = 30 -- Khoảng cách đánh quái
+local WeaponPriority = {"Combat", "Black Leg", "Electro", "Fishman Karate"}
+
+-- Hàm chọn vũ khí
+local function EquipWeapon()
+    for _, tool in ipairs(LocalPlayer.Backpack:GetChildren()) do
+        if table.find(WeaponPriority, tool.Name) then
+            LocalPlayer.Character.Humanoid:EquipTool(tool)
+            break
+        end
     end
 end
 
--- Hàm lấy thông tin quái hiện tại
-local function GetMob()
-    local level = GetLevel()
-    local name, info = farmlogic.GetTargetMob(level)
-    return name, info
+-- Hàm tìm mob
+local function FindMob(mobName)
+    for _, mob in ipairs(workspace.Enemies:GetChildren()) do
+        if mob.Name == mobName and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
+            return mob
+        end
+    end
+    return nil
 end
 
--- Hàm chính: quét quái và đánh
-rs.RenderStepped:Connect(function()
-    local mobName, mobData = GetMob()
-    if not mobData then return end
+-- Hàm nhận nhiệm vụ
+local function GetQuest(mobData)
+    if not mobData.Quest then return end
+    local NPC = workspace:FindFirstChild(mobData.Quest.NPC)
+    if NPC and (NPC.Position - HumanoidRootPart.Position).Magnitude > 10 then
+        HumanoidRootPart.CFrame = NPC.CFrame + Vector3.new(0, 3, 0)
+        wait(1)
+    end
 
-    for _, mob in pairs(workspace.Enemies:GetChildren()) do
-        if mob.Name == mobName and mob:FindFirstChild("Humanoid") and mob:FindFirstChild("HumanoidRootPart") and mob.Humanoid.Health > 0 then
+    local args = {
+        [1] = "StartQuest",
+        [2] = mobData.Quest.Name,
+        [3] = mobData.Quest.Level
+    }
+
+    game:GetService("ReplicatedStorage").Remotes.CommF_:InvokeServer(unpack(args))
+end
+
+-- Hàm farm
+local function FarmLoop()
+    while Farming and task.wait() do
+        local level = LocalPlayer.Data.Level.Value
+        local mobName, mobData = FarmLogic.GetTargetMob(level)
+        if not mobName then continue end
+
+        GetQuest(mobData)
+        EquipWeapon()
+
+        local mob = FindMob(mobName)
+        if mob then
             pcall(function()
-                hrp.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
-                local tool = char:FindFirstChildOfClass("Tool")
-                if tool then
-                    tool:Activate()
+                -- Bring Mob
+                mob.HumanoidRootPart.CFrame = HumanoidRootPart.CFrame + Vector3.new(0, 0, -Distance)
+
+                -- Đánh Mob
+                if LocalPlayer.Character:FindFirstChildOfClass("Tool") then
+                    for _, v in ipairs(getconnections(LocalPlayer.Character:FindFirstChildOfClass("Tool").Activated)) do
+                        v:Fire()
+                    end
+                else
+                    LocalPlayer.Character:FindFirstChild("Humanoid"):ChangeState(3)
                 end
             end)
         end
     end
-end)
+end
+
+-- Hàm bật/tắt farm
+local function SetFarm(state)
+    Farming = state
+    if state then
+        task.spawn(FarmLoop)
+    end
+end
+
+return {
+    Start = function() SetFarm(true) end,
+    Stop = function() SetFarm(false) end,
+    Toggle = SetFarm
+}
