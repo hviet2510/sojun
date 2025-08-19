@@ -1,5 +1,5 @@
 return function(Window)
-    local Macro = loadstring(game:HttpGet("https://raw.githubusercontent.com/sojun/main/modules/MacroCore.lua"))()
+    local Macro = loadstring(game:HttpGet("https://raw.githubusercontent.com/hviet2510/sojun/main/modules/MacroCore.lua"))()
 
     local MacroTab = Window:MakeTab({
         Name = "Macro",
@@ -63,4 +63,5 @@ return function(Window)
         end
     })
 end
+
 
